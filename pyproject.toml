@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cat-embedding"
+version = "0.1.0"
+description = "고양이 이미지 임베딩 및 유사도 비교 도구"
+authors = [{name = "Developer", email = "dev@example.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+keywords = ["image", "embedding", "similarity", "cat"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "rich>=13.0",
+    "pillow",
+    "scikit-learn", 
+    "numpy"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "pip-tools"
+]
+
+[project.scripts]
+cat-embedding = "cat_embedding:main"
+
+[project.urls]
+Homepage = "https://github.com/username/cat-embedding"
+Repository = "https://github.com/username/cat-embedding"
+
+[tool.setuptools]
+packages = ["cat_embedding"]
+package-dir = {"" = "src"}
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
