@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from .schema import CatMeta
 from .features import human_feature_vector
-from .geo import normalize_latlon
+from .geo import normalize_latlon, extract_gps_from_image
 from .embedding_extractor import image_embedding
 from .fuse import fuse_vectors
 
@@ -24,7 +24,13 @@ def load_metadata(path: str) -> List[CatMeta]:
 
 def build_vector(meta: CatMeta, bounds=None, weights=(0.85, 0.05, 0.10)) -> np.ndarray:
     img = image_embedding(meta.image_path)
-    geo = normalize_latlon(meta.lat, meta.lon, bounds=bounds)
+    # If lat/lon missing, try EXIF GPS extraction from the image
+    lat, lon = meta.lat, meta.lon
+    if lat is None or lon is None:
+        gps = extract_gps_from_image(meta.image_path)
+        if gps is not None:
+            lat, lon = gps
+    geo = normalize_latlon(lat, lon, bounds=bounds)
     human = human_feature_vector(meta)
     return fuse_vectors(img, geo, human, *weights)
 
