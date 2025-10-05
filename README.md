@@ -204,6 +204,28 @@ cat-embedding match --gallery gallery.npz --query query.json --thr 0.80 --margin
 - 위치 정보가 유효하면 `--bounds '[minLat,maxLat,minLon,maxLon]'`로 정규화 범위를 지정하면 도움이 됩니다.
 - 애매한 케이스에서는 `--thr`(임계값)과 `--margin`(마진)을 조정해 보세요.
 
+### 📍 위치 데이터(EXIF GPS)
+
+- **자동 추출**: 메타데이터에 `lat`/`lon`이 누락되었거나 `null`이면, 이미지의 EXIF GPS에서 위경도를 자동으로 추출해 사용합니다.
+- **우선순위**: 메타데이터에 `lat`/`lon`이 명시되어 있으면 EXIF값보다 메타데이터 값을 사용합니다.
+- **없을 때의 처리**: EXIF GPS가 없거나 파싱에 실패하면 위치 벡터는 0으로 처리됩니다(위치 정보 비사용과 동일).
+- **정규화 범위**: `--bounds '[minLat,maxLat,minLon,maxLon]'`를 지정하면 위치를 구간 내에서 0~1로 정규화합니다.
+- **주의**: 일부 편집/리사이즈 도구는 EXIF를 제거합니다. 이미지에 GPS가 포함되어 있어야 자동 추출이 가능합니다.
+
+예시(위치 누락 → EXIF 사용):
+
+```json
+{
+  "cat_id": "cat_001",
+  "image_path": "path/to/photo_with_gps.jpg",
+  "ear_tip": "left",
+  "nose_color": "pink",
+  "eye_color": "yellow",
+  "coat_type": "ginger_tabby",
+  "has_stripes": true
+}
+```
+
 ## 🔗 관련 링크
 
 - [OpenAI CLIP](https://github.com/openai/CLIP)
