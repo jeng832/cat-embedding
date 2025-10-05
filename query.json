@@ -1,0 +1,11 @@
+{
+    "image_path": "cat1.jpg",
+    "timestamp": "2024-10-04T12:00:00", 
+    "lat": 37.5665,
+    "lon": 126.9780,
+    "ear_tip": "left",
+    "nose_color": "pink", 
+    "eye_color": "yellow",
+    "coat_type": "ginger_tabby",
+    "has_stripes": true
+}

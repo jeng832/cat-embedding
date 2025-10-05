@@ -9,7 +9,7 @@ description = "고양이 이미지 임베딩 및 유사도 비교 도구"
 authors = [{name = "Developer", email = "dev@example.com"}]
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.8"
+requires-python = ">=3.8,<3.13"
 keywords = ["image", "embedding", "similarity", "cat"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -21,14 +21,16 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
 ]
 
 dependencies = [
     "rich>=13.0",
     "pillow",
     "scikit-learn", 
-    "numpy"
+    "numpy",
+    "pydantic",
+    "torch",
+    "clip @ git+https://github.com/openai/CLIP.git"
 ]
 
 [project.optional-dependencies]

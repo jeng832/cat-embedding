@@ -2,3 +2,6 @@ rich>=13.0
 pillow
 scikit-learn
 numpy
+pydantic
+torch
+git+https://github.com/openai/CLIP.git
