@@ -1,5 +1,6 @@
 # src/cat_embedding/__main__.py
-import argparse, json
+import argparse, json, os
+from pathlib import Path
 from .schema import CatMeta
 from .gallery import build_gallery, load_gallery, build_vector, match_query
 
@@ -19,15 +20,20 @@ def main():
     m.add_argument("--thr",     type=float, default=0.80)
     m.add_argument("--margin",  type=float, default=0.05)
 
+    c = sub.add_parser("clean", help="임베딩 정보 및 갤러리 파일 삭제")
+    c.add_argument("--gallery", help="삭제할 갤러리 파일 (.npz)")
+    c.add_argument("--all", action="store_true", help="모든 임베딩 관련 파일 삭제")
+    c.add_argument("--force", action="store_true", help="확인 없이 강제 삭제")
+
     args = ap.parse_args()
 
-    bounds = json.loads(args.bounds) if args.bounds else None
-
     if args.cmd == "build":
+        bounds = json.loads(args.bounds) if args.bounds else None
         build_gallery(args.meta, args.out, bounds=bounds)
         print(f"✅ gallery saved to {args.out}")
 
     elif args.cmd == "match":
+        bounds = json.loads(args.bounds) if args.bounds else None
         gal = load_gallery(args.gallery)
         payload = json.loads(open(args.query, "r", encoding="utf-8").read())
         metas = [CatMeta(**payload)] if isinstance(payload, dict) else [CatMeta(**x) for x in payload]
@@ -37,6 +43,65 @@ def main():
         q = np.mean(vecs, axis=0)  # 간단 평균 (필요 시 상위 p% 평균 등으로 개선)
         pred, sim = match_query(q, gal, threshold=args.thr, margin=args.margin)
         print(json.dumps({"pred": pred, "sim": round(float(sim),4)}, ensure_ascii=False))
+
+    elif args.cmd == "clean":
+        clean_embedding_files(args)
+
+def clean_embedding_files(args):
+    """임베딩 관련 파일들을 삭제하는 함수"""
+    deleted_files = []
+    
+    if args.all:
+        # 모든 임베딩 관련 파일 패턴
+        patterns = ["*.npz", "*_gallery*.npz", "*_embedding*.npz", "gallery*.npz"]
+        current_dir = Path(".")
+        
+        for pattern in patterns:
+            for file_path in current_dir.glob(pattern):
+                if file_path.is_file():
+                    deleted_files.append(str(file_path))
+                    file_path.unlink()
+        
+        # 메타데이터 파일도 삭제 (선택사항)
+        metadata_files = ["test_metadata.json", "query.json", "metadata.json"]
+        for file_name in metadata_files:
+            file_path = Path(file_name)
+            if file_path.exists():
+                deleted_files.append(str(file_path))
+                file_path.unlink()
+    
+    elif args.gallery:
+        # 특정 갤러리 파일만 삭제
+        gallery_path = Path(args.gallery)
+        if gallery_path.exists():
+            deleted_files.append(str(gallery_path))
+            gallery_path.unlink()
+        else:
+            print(f"❌ 파일을 찾을 수 없습니다: {args.gallery}")
+            return
+    
+    else:
+        print("❌ --gallery 또는 --all 옵션을 지정해주세요")
+        return
+    
+    # 확인 메시지 (--force가 아닌 경우)
+    if not args.force and deleted_files:
+        print("🗑️  삭제할 파일들:")
+        for file in deleted_files:
+            print(f"   - {file}")
+        
+        confirm = input("\n정말 삭제하시겠습니까? (y/N): ").strip().lower()
+        if confirm not in ['y', 'yes']:
+            print("❌ 삭제가 취소되었습니다")
+            return
+    
+    # 파일 삭제 실행
+    if deleted_files:
+        print(f"✅ {len(deleted_files)}개 파일이 삭제되었습니다:")
+        for file in deleted_files:
+            print(f"   - {file}")
+    else:
+        print("ℹ️  삭제할 임베딩 파일이 없습니다")
 
 if __name__ == "__main__":
     main()

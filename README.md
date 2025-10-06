@@ -204,6 +204,24 @@ cat-embedding match --gallery gallery.npz --query query.json --thr 0.80 --margin
 - 위치 정보가 유효하면 `--bounds '[minLat,maxLat,minLon,maxLon]'`로 정규화 범위를 지정하면 도움이 됩니다.
 - 애매한 케이스에서는 `--thr`(임계값)과 `--margin`(마진)을 조정해 보세요.
 
+### 🗑️ 임베딩 데이터 정리
+
+```bash
+# 특정 갤러리 파일 삭제
+cat-embedding clean --gallery gallery.npz
+
+# 모든 임베딩 관련 파일 삭제 (확인 후)
+cat-embedding clean --all
+
+# 강제 삭제 (확인 없이)
+cat-embedding clean --all --force
+```
+
+**삭제되는 파일들:**
+- `.npz` 파일 (갤러리, 임베딩 벡터)
+- `*_gallery*.npz`, `*_embedding*.npz` 패턴
+- `test_metadata.json`, `query.json`, `metadata.json` (--all 옵션 시)
+
 ### 📍 위치 데이터(EXIF GPS)
 
 - **자동 추출**: 메타데이터에 `lat`/`lon`이 누락되었거나 `null`이면, 이미지의 EXIF GPS에서 위경도를 자동으로 추출해 사용합니다.
