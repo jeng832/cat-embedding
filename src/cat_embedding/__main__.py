@@ -93,7 +93,69 @@ def main():
         import numpy as np
         q = np.mean(vecs, axis=0)  # 간단 평균 (필요 시 상위 p% 평균 등으로 개선)
         pred, sim = match_query(q, gal, threshold=args.thr, margin=args.margin)
-        print(json.dumps({"pred": pred, "sim": round(float(sim),4)}, ensure_ascii=False))
+        
+        # 결과 출력
+        result = {"pred": pred, "sim": round(float(sim),4)}
+        print(json.dumps(result, ensure_ascii=False))
+        
+        # 새로운 개체로 확인된 경우 metadata 추가 제안
+        # (실제 사용: UNKNOWN이고 임계값 미만인 경우)
+        # (테스트용: 강제로 새로운 개체로 간주하려면 아래 주석 해제)
+        is_new_entity = (pred == "UNKNOWN" and sim < args.thr)
+        # is_new_entity = True  # 테스트용: 항상 새로운 개체로 간주
+        if is_new_entity:
+            print(f"\n🆕 새로운 개체로 확인되었습니다! (유사도: {sim:.4f})")
+            print("이 개체를 갤러리에 추가하시겠습니까?")
+            
+            # 메타데이터 파일 경로 추정
+            metadata_file = "metadata.json"
+            if os.path.exists(metadata_file):
+                # 기존 메타데이터에 추가
+                try:
+                    with open(metadata_file, "r", encoding="utf-8") as f:
+                        existing_data = json.load(f)
+                    
+                    # 새로운 개체 ID 생성
+                    existing_ids = [item.get("cat_id", "") for item in existing_data if isinstance(item, dict)]
+                    new_id = f"cat_{len(existing_ids) + 1:03d}"
+                    
+                    # 쿼리 메타데이터를 새로운 ID로 업데이트
+                    new_meta = metas[0].model_dump()
+                    new_meta["cat_id"] = new_id
+                    # datetime 객체를 문자열로 변환
+                    if "timestamp" in new_meta and hasattr(new_meta["timestamp"], "isoformat"):
+                        new_meta["timestamp"] = new_meta["timestamp"].isoformat()
+                    
+                    # 기존 데이터에 추가
+                    existing_data.append(new_meta)
+                    
+                    # 사용자 확인
+                    print(f"📝 추가할 개체 정보:")
+                    print(f"   - ID: {new_id}")
+                    print(f"   - 이미지: {new_meta['image_path']}")
+                    print(f"   - 위치: ({new_meta.get('lat', 'N/A')}, {new_meta.get('lon', 'N/A')})")
+                    
+                    confirm = input(f"\n{metadata_file}에 추가하고 갤러리를 재구축하시겠습니까? (y/N): ").strip().lower()
+                    
+                    if confirm in ['y', 'yes']:
+                        # 메타데이터 파일 업데이트
+                        with open(metadata_file, "w", encoding="utf-8") as f:
+                            json.dump(existing_data, f, indent=2, ensure_ascii=False)
+                        print(f"✅ {metadata_file}에 {new_id} 추가됨")
+                        
+                        # 갤러리 재구축
+                        print("🔄 갤러리 재구축 중...")
+                        build_gallery(metadata_file, args.gallery, bounds=bounds)
+                        print(f"✅ 갤러리 재구축 완료: {args.gallery}")
+                        print(f"💡 이제 {new_id}로 매칭할 수 있습니다!")
+                    else:
+                        print("❌ 추가가 취소되었습니다")
+                        
+                except Exception as e:
+                    print(f"❌ 메타데이터 업데이트 중 오류: {e}")
+            else:
+                print(f"❌ 메타데이터 파일을 찾을 수 없습니다: {metadata_file}")
+                print("💡 먼저 메타데이터 파일을 생성하세요")
 
     elif args.cmd == "clean":
         clean_embedding_files(args)
