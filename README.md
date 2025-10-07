@@ -20,14 +20,13 @@
 git clone https://github.com/jeng832/cat-embedding.git
 cd cat-embedding
 
-# 가상환경 생성 및 활성화
+# 자동 설정 및 대화형 모드 시작
+./run.sh
+
+# 또는 수동 설정
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 패키지 설치
 pip install -e .
-
-# 실행
 cat-embedding
 ```
 
