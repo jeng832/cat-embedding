@@ -77,10 +77,37 @@ pip install --upgrade pip
 pip install -e .
 echo "✅ 의존성 설치 완료"
 
-# 테스트 이미지 확인
+# 필수 파일 확인 및 안내
+echo "📋 필수 파일 확인 중..."
+
+# 이미지 파일 확인
 if [ ! -f "cat1.jpg" ] || [ ! -f "cat2.jpg" ]; then
     echo "⚠️  경고: cat1.jpg 또는 cat2.jpg 파일이 없습니다."
     echo "   테스트 이미지를 프로젝트 루트에 준비해주세요."
+fi
+
+# 메타데이터 파일 확인
+if [ ! -f "metadata.json" ]; then
+    echo "ℹ️  메타데이터 파일이 없습니다."
+    echo "   다음 명령어로 예시 파일을 생성할 수 있습니다:"
+    echo ""
+    echo "   cat > metadata.json << 'EOF'"
+    echo "["
+    echo "  {"
+    echo "    \"cat_id\": \"cat_001\","
+    echo "    \"image_path\": \"cat1.jpg\","
+    echo "    \"timestamp\": \"2024-10-04T10:00:00\","
+    echo "    \"lat\": 37.5665,"
+    echo "    \"lon\": 126.9780,"
+    echo "    \"ear_tip\": \"left\","
+    echo "    \"nose_color\": \"pink\","
+    echo "    \"eye_color\": \"yellow\","
+    echo "    \"coat_type\": \"ginger_tabby\","
+    echo "    \"has_stripes\": true"
+    echo "  }"
+    echo "]"
+    echo "EOF"
+    echo ""
 fi
 
 # 사용법 안내
@@ -89,16 +116,19 @@ echo "🚀 Cat Embedding 준비 완료!"
 echo "----------------------------------------"
 echo "💡 사용법:"
 echo ""
-echo "1. 갤러리 구축:"
+echo "1. 메타데이터 파일 생성 (없는 경우):"
+echo "   # 위의 안내에 따라 metadata.json 생성"
+echo ""
+echo "2. 갤러리 구축:"
 echo "   cat-embedding build --meta metadata.json --out gallery.npz"
 echo ""
-echo "2. 쿼리 매칭:"
+echo "3. 쿼리 매칭:"
 echo "   cat-embedding match --gallery gallery.npz --query query.json"
 echo ""
-echo "3. 임베딩 데이터 정리:"
+echo "4. 임베딩 데이터 정리:"
 echo "   cat-embedding clean --all"
 echo ""
-echo "4. 도움말:"
+echo "5. 도움말:"
 echo "   cat-embedding --help"
 echo "----------------------------------------"
 echo ""
