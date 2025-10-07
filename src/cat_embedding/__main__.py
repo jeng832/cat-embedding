@@ -25,6 +25,9 @@ def main():
     c.add_argument("--all", action="store_true", help="모든 임베딩 관련 파일 삭제")
     c.add_argument("--force", action="store_true", help="확인 없이 강제 삭제")
 
+    i = sub.add_parser("init", help="프로젝트 초기화 (예시 파일 생성)")
+    i.add_argument("--with-images", action="store_true", help="이미지 파일이 있는 경우 자동으로 메타데이터 생성")
+
     args = ap.parse_args()
 
     if args.cmd == "build":
@@ -160,6 +163,9 @@ def main():
     elif args.cmd == "clean":
         clean_embedding_files(args)
 
+    elif args.cmd == "init":
+        init_project(args)
+
 def clean_embedding_files(args):
     """임베딩 관련 파일들을 삭제하는 함수"""
     deleted_files = []
@@ -215,6 +221,102 @@ def clean_embedding_files(args):
             print(f"   - {file}")
     else:
         print("ℹ️  삭제할 임베딩 파일이 없습니다")
+
+def init_project(args):
+    """프로젝트 초기화 함수"""
+    print("🚀 Cat Embedding 프로젝트 초기화 중...")
+    
+    # 이미지 파일 검색
+    image_files = []
+    for pattern in ["*.jpg", "*.jpeg", "*.png"]:
+        for file_path in Path(".").glob(pattern):
+            if file_path.is_file():
+                image_files.append(str(file_path))
+    
+    if args.with_images and image_files:
+        print(f"📸 발견된 이미지 파일: {len(image_files)}개")
+        for img in image_files:
+            print(f"   - {img}")
+        
+        # 자동으로 메타데이터 생성
+        metadata = []
+        for i, img_path in enumerate(image_files[:5], 1):  # 최대 5개까지만
+            cat_id = f"cat_{i:03d}"
+            metadata.append({
+                "cat_id": cat_id,
+                "image_path": img_path,
+                "timestamp": "2024-10-04T10:00:00",
+                "lat": 37.5665 + (i * 0.001),  # 약간씩 다른 위치
+                "lon": 126.9780 + (i * 0.001),
+                "ear_tip": "left" if i % 2 == 1 else "right",
+                "nose_color": "pink" if i % 2 == 1 else "black",
+                "eye_color": "yellow" if i % 2 == 1 else "green",
+                "coat_type": "ginger_tabby" if i % 2 == 1 else "tuxedo",
+                "has_stripes": i % 2 == 1
+            })
+        
+        # 메타데이터 파일 생성
+        with open("metadata.json", "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+        
+        print(f"✅ metadata.json 생성 완료 ({len(metadata)}개 개체)")
+        
+        # 갤러리 자동 구축
+        print("🔄 갤러리 구축 중...")
+        try:
+            build_gallery("metadata.json", "gallery.npz")
+            print("✅ gallery.npz 생성 완료")
+            print("\n🎉 초기화 완료! 이제 다음 명령어를 사용할 수 있습니다:")
+            print("   cat-embedding match --gallery gallery.npz --query query.json")
+        except Exception as e:
+            print(f"❌ 갤러리 구축 중 오류: {e}")
+            print("💡 수동으로 시도해보세요: cat-embedding build --meta metadata.json --out gallery.npz")
+    
+    else:
+        # 예시 파일들 생성
+        print("📝 예시 파일들을 생성합니다...")
+        
+        # 예시 메타데이터 생성
+        example_metadata = [
+            {
+                "cat_id": "cat_001",
+                "image_path": "cat1.jpg",
+                "timestamp": "2024-10-04T10:00:00",
+                "lat": 37.5665,
+                "lon": 126.9780,
+                "ear_tip": "left",
+                "nose_color": "pink",
+                "eye_color": "yellow",
+                "coat_type": "ginger_tabby",
+                "has_stripes": True
+            }
+        ]
+        
+        with open("metadata.json", "w", encoding="utf-8") as f:
+            json.dump(example_metadata, f, indent=2, ensure_ascii=False)
+        print("✅ metadata.json 생성 완료")
+        
+        # 예시 쿼리 파일 생성
+        example_query = {
+            "cat_id": "query_cat",
+            "image_path": "cat1.jpg",
+            "timestamp": "2024-10-04T12:00:00",
+            "lat": 37.5665,
+            "lon": 126.9780,
+            "ear_tip": "left",
+            "nose_color": "pink",
+            "eye_color": "yellow",
+            "coat_type": "ginger_tabby",
+            "has_stripes": True
+        }
+        
+        with open("query.json", "w", encoding="utf-8") as f:
+            json.dump(example_query, f, indent=2, ensure_ascii=False)
+        print("✅ query.json 생성 완료")
+        
+        print("\n🎉 초기화 완료! 다음 단계를 진행하세요:")
+        print("1. 갤러리 구축: cat-embedding build --meta metadata.json --out gallery.npz")
+        print("2. 쿼리 매칭: cat-embedding match --gallery gallery.npz --query query.json")
 
 if __name__ == "__main__":
     main()

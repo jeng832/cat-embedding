@@ -51,17 +51,58 @@ cat-embedding
 
 ## 💻 사용법
 
-### 1. 콘솔 명령어 (권장)
+### 🚀 빠른 시작 (권장)
+
+**첫 사용자라면 이 방법을 사용하세요:**
+
+```bash
+# 1. 프로젝트 초기화 (이미지 파일이 있는 경우)
+cat-embedding init --with-images
+
+# 2. 바로 매칭 테스트
+cat-embedding match --gallery gallery.npz --query query.json
+```
+
+**이미지 파일이 없는 경우:**
+```bash
+# 1. 예시 파일 생성
+cat-embedding init
+
+# 2. 갤러리 구축
+cat-embedding build --meta metadata.json --out gallery.npz
+
+# 3. 쿼리 매칭
+cat-embedding match --gallery gallery.npz --query query.json
+```
+
+### 📋 전체 명령어 목록
+
+**프로젝트 초기화:**
+```bash
+cat-embedding init                    # 예시 파일 생성
+cat-embedding init --with-images      # 이미지 파일 자동 감지 및 초기화
+```
+
+**갤러리 관리:**
+```bash
+cat-embedding build --meta metadata.json --out gallery.npz
+cat-embedding match --gallery gallery.npz --query query.json
+cat-embedding clean --all            # 모든 임베딩 파일 삭제
+```
+
+### 🔧 고급 사용법
+
+**1. 콘솔 명령어 (권장)**
 ```bash
 cat-embedding
 ```
 
-### 2. Python 모듈로 실행
+**2. Python 모듈로 실행**
 ```bash
 python -m cat_embedding
 ```
 
-### 3. 프로그래밍 방식으로 사용
+**3. 프로그래밍 방식으로 사용**
 ```python
 from cat_embedding import main
 
@@ -168,6 +209,34 @@ def compare_images(img1, img2, threshold=0.9):  # 임계값 변경
 ```
 
 ### 2) 새로운 개체로 판정된 경우 (`pred` == `"UNKNOWN"`)
+
+**🆕 자동 추가 기능 (권장):**
+- 새로운 개체로 감지되면 자동으로 갤러리에 추가 제안
+- 사용자 확인 후 메타데이터 자동 업데이트 및 갤러리 재구축
+- 새로운 ID 자동 생성 (`cat_003`, `cat_004` 등)
+
+```bash
+# 새로운 개체 감지 시 자동 처리
+cat-embedding match --gallery gallery.npz --query query.json
+
+# 출력 예시:
+{"pred": "UNKNOWN", "sim": 0.65}
+
+🆕 새로운 개체로 확인되었습니다! (유사도: 0.6500)
+이 개체를 갤러리에 추가하시겠습니까?
+📝 추가할 개체 정보:
+   - ID: cat_003
+   - 이미지: cat1.jpg
+   - 위치: (37.5665, 126.978)
+
+metadata.json에 추가하고 갤러리를 재구축하시겠습니까? (y/N): y
+✅ metadata.json에 cat_003 추가됨
+🔄 갤러리 재구축 중...
+✅ 갤러리 재구축 완료: gallery.npz
+💡 이제 cat_003로 매칭할 수 있습니다!
+```
+
+**수동 처리 (고급 사용자):**
 - **의미**: 갤러리에 유사한 개체가 없습니다(오픈셋).
 - **권장 동작**:
   1) 새 `cat_id`를 부여해 메타데이터에 등록합니다.
