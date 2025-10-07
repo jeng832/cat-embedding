@@ -29,11 +29,62 @@ def main():
 
     if args.cmd == "build":
         bounds = json.loads(args.bounds) if args.bounds else None
+        
+        # 메타데이터 파일 확인
+        if not os.path.exists(args.meta):
+            print(f"❌ 메타데이터 파일을 찾을 수 없습니다: {args.meta}")
+            print("💡 메타데이터 파일을 생성하세요:")
+            print("   cat > metadata.json << 'EOF'")
+            print("[")
+            print("  {")
+            print("    \"cat_id\": \"cat_001\",")
+            print("    \"image_path\": \"cat1.jpg\",")
+            print("    \"timestamp\": \"2024-10-04T10:00:00\",")
+            print("    \"lat\": 37.5665,")
+            print("    \"lon\": 126.9780,")
+            print("    \"ear_tip\": \"left\",")
+            print("    \"nose_color\": \"pink\",")
+            print("    \"eye_color\": \"yellow\",")
+            print("    \"coat_type\": \"ginger_tabby\",")
+            print("    \"has_stripes\": true")
+            print("  }")
+            print("]")
+            print("EOF")
+            return
+        
         build_gallery(args.meta, args.out, bounds=bounds)
         print(f"✅ gallery saved to {args.out}")
 
     elif args.cmd == "match":
         bounds = json.loads(args.bounds) if args.bounds else None
+        
+        # 갤러리 파일 확인
+        if not os.path.exists(args.gallery):
+            print(f"❌ 갤러리 파일을 찾을 수 없습니다: {args.gallery}")
+            print("💡 먼저 갤러리를 구축하세요:")
+            print(f"   cat-embedding build --meta metadata.json --out {args.gallery}")
+            return
+        
+        # 쿼리 파일 확인
+        if not os.path.exists(args.query):
+            print(f"❌ 쿼리 파일을 찾을 수 없습니다: {args.query}")
+            print("💡 쿼리 파일을 생성하세요:")
+            print("   cat > query.json << 'EOF'")
+            print("{")
+            print("  \"cat_id\": \"query_cat\",")
+            print("  \"image_path\": \"cat1.jpg\",")
+            print("  \"timestamp\": \"2024-10-04T12:00:00\",")
+            print("  \"lat\": 37.5665,")
+            print("  \"lon\": 126.9780,")
+            print("  \"ear_tip\": \"left\",")
+            print("  \"nose_color\": \"pink\",")
+            print("  \"eye_color\": \"yellow\",")
+            print("  \"coat_type\": \"ginger_tabby\",")
+            print("  \"has_stripes\": true")
+            print("}")
+            print("EOF")
+            return
+        
         gal = load_gallery(args.gallery)
         payload = json.loads(open(args.query, "r", encoding="utf-8").read())
         metas = [CatMeta(**payload)] if isinstance(payload, dict) else [CatMeta(**x) for x in payload]
