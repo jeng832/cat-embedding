@@ -193,6 +193,14 @@ def main():
                     if "timestamp" in new_meta and hasattr(new_meta["timestamp"], "isoformat"):
                         new_meta["timestamp"] = new_meta["timestamp"].isoformat()
                     
+                    # 위치 정보가 없으면 이미지에서 GPS 추출 시도
+                    if new_meta.get("lat") is None or new_meta.get("lon") is None:
+                        from .geo import extract_gps_from_image
+                        gps = extract_gps_from_image(new_meta["image_path"])
+                        if gps is not None:
+                            new_meta["lat"], new_meta["lon"] = gps
+                            print(f"📍 이미지에서 GPS 정보 추출됨: ({gps[0]:.6f}, {gps[1]:.6f})")
+                    
                     # 기존 데이터에 추가
                     existing_data.append(new_meta)
                     

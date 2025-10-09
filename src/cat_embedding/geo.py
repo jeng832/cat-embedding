@@ -63,41 +63,54 @@ def extract_gps_from_image(image_path: str) -> Optional[Tuple[float, float]]:
     Returns None if GPS is not present or cannot be parsed.
     """
     try:
-        img = Image.open(image_path)
-        # Pillow >= 6: use getexif(); older: _getexif()
-        exif = getattr(img, "getexif", None)
-        exif_data = exif() if callable(exif) else getattr(img, "_getexif", lambda: None)()
-        if not exif_data:
+        # exifread 라이브러리 사용 (더 안정적)
+        import exifread
+        
+        with open(image_path, 'rb') as f:
+            tags = exifread.process_file(f, details=True)
+        
+        # GPS 정보 추출
+        gps_latitude = tags.get('GPS GPSLatitude')
+        gps_latitude_ref = tags.get('GPS GPSLatitudeRef')
+        gps_longitude = tags.get('GPS GPSLongitude')
+        gps_longitude_ref = tags.get('GPS GPSLongitudeRef')
+        
+        if not gps_latitude or not gps_longitude:
             return None
-
-        # GPSInfo tag id in EXIF is 34853
-        gps_tag_id = None
-        for tag_id, tag_name in ExifTags.TAGS.items():
-            if tag_name == "GPSInfo":
-                gps_tag_id = tag_id
-                break
-        if gps_tag_id is None or gps_tag_id not in exif_data:
+        
+        # DMS를 십진도로 변환
+        def dms_to_decimal(dms_str):
+            if dms_str:
+                parts = str(dms_str).strip('[]').split(', ')
+                if len(parts) == 3:
+                    degrees = float(parts[0])
+                    minutes = float(parts[1])
+                    
+                    # 초 단위 처리 (분수 포함)
+                    seconds_str = parts[2]
+                    if '/' in seconds_str:
+                        numerator, denominator = seconds_str.split('/')
+                        seconds = float(numerator) / float(denominator)
+                    else:
+                        seconds = float(seconds_str)
+                    
+                    return degrees + (minutes / 60.0) + (seconds / 3600.0)
             return None
-
-        gps_info = exif_data[gps_tag_id]
-        # gps_info can be a dict keyed by ints; translate keys using GPSTAGS names
-        gps = {}
-        for key, val in getattr(gps_info, "items", lambda: [])():
-            name = ExifTags.GPSTAGS.get(key, key)
-            gps[name] = val
-
-        lat_ref = gps.get("GPSLatitudeRef")
-        lat_dms = gps.get("GPSLatitude")
-        lon_ref = gps.get("GPSLongitudeRef")
-        lon_dms = gps.get("GPSLongitude")
-        if not lat_ref or not lat_dms or not lon_ref or not lon_dms:
+        
+        lat_decimal = dms_to_decimal(gps_latitude)
+        lon_decimal = dms_to_decimal(gps_longitude)
+        
+        if lat_decimal and lon_decimal:
+            # 남위/서경 처리
+            if str(gps_latitude_ref) == 'S':
+                lat_decimal = -lat_decimal
+            if str(gps_longitude_ref) == 'W':
+                lon_decimal = -lon_decimal
+            
+            return float(lat_decimal), float(lon_decimal)
+        else:
             return None
-
-        lat = _dms_to_degrees(lat_dms, lat_ref)
-        lon = _dms_to_degrees(lon_dms, lon_ref)
-        if lat is None or lon is None:
-            return None
-        return float(lat), float(lon)
-    except Exception:
+            
+    except Exception as e:
         # Any error leads to graceful fallback to None
         return None
