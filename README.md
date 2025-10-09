@@ -342,8 +342,8 @@ pip install -e .
 
 아래 표는 레포지토리 루트의 `cat1.jpg`, `cat2.jpg`에 대한 사람 정의 특징(임베딩 구성 요소)을 요약합니다.
 
-|  | cat1.jpg | cat2.jpg | cat3.jpg |
-|---|---|---|
+| 특징 | cat1.jpg | cat2.jpg | cat3.jpg |
+|---|---|---|---|
 | **이미지** | ![cat1.jpg](cat1.jpg) | ![cat2.jpg](cat2.jpg) | ![cat3.jpg](cat3.jpg) |
 | **TNR 여부** | 없음 | 없음 | 없음 |
 | **코 색깔** | pink | pink | pink |
