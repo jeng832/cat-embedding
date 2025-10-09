@@ -41,13 +41,22 @@ def build_gallery(metadata_path: str, out_path: str, bounds=None) -> Dict[str, L
         vec = build_vector(m, bounds=bounds)
         key = m.cat_id or "__unknown__"
         gallery.setdefault(key, []).append(vec)
+    
+    # 저장할 데이터 준비
+    save_data = {k: np.vstack(v) for k, v in gallery.items()}
+    
+    # bounds 정보가 있으면 함께 저장
+    if bounds is not None:
+        save_data['bounds'] = np.array(bounds)
+    
     # 저장(간단히 npz)
-    np.savez_compressed(out_path, **{k: np.vstack(v) for k, v in gallery.items()})
+    np.savez_compressed(out_path, **save_data)
     return gallery
 
 def load_gallery(npz_path: str) -> Dict[str, np.ndarray]:
     d = np.load(npz_path, allow_pickle=False)
-    return {k: d[k] for k in d.files}
+    # bounds 정보는 제외하고 고양이 임베딩만 반환
+    return {k: d[k] for k in d.files if k != 'bounds'}
 
 def cosine_top2(query: np.ndarray, mat: np.ndarray) -> Tuple[float,float]:
     sims = cosine_similarity(query.reshape(1,-1), mat)[0]  # (N,)

@@ -2,7 +2,56 @@
 import argparse, json, os
 from pathlib import Path
 from .schema import CatMeta
-from .gallery import build_gallery, load_gallery, build_vector, match_query
+from .gallery import build_gallery, load_gallery, build_vector, match_query, load_metadata
+
+def calculate_auto_bounds(metadata_path: str) -> list:
+    """메타데이터에서 위치 정보를 기반으로 자동 bounds 계산"""
+    try:
+        metas = load_metadata(metadata_path)
+        lats = [m.lat for m in metas if m.lat is not None]
+        lons = [m.lon for m in metas if m.lon is not None]
+        
+        if not lats or not lons:
+            return None
+            
+        min_lat, max_lat = min(lats), max(lats)
+        min_lon, max_lon = min(lons), max(lons)
+        
+        # 약간의 여유를 두어 경계값이 정확히 0이나 1이 되지 않도록 함
+        lat_margin = (max_lat - min_lat) * 0.01 if max_lat != min_lat else 0.01
+        lon_margin = (max_lon - min_lon) * 0.01 if max_lon != min_lon else 0.01
+        
+        bounds = [
+            min_lat - lat_margin,
+            max_lat + lat_margin, 
+            min_lon - lon_margin,
+            max_lon + lon_margin
+        ]
+        
+        print(f"📍 자동 bounds 계산됨: [{bounds[0]:.6f}, {bounds[1]:.6f}, {bounds[2]:.6f}, {bounds[3]:.6f}]")
+        return bounds
+        
+    except Exception as e:
+        print(f"⚠️ 자동 bounds 계산 실패: {e}")
+        return None
+
+def extract_bounds_from_gallery(gallery_path: str) -> list:
+    """갤러리 파일에서 bounds 정보 추출"""
+    try:
+        import numpy as np
+        gallery_data = np.load(gallery_path, allow_pickle=True)
+        
+        # bounds 정보가 저장되어 있는지 확인
+        if 'bounds' in gallery_data:
+            bounds = gallery_data['bounds'].tolist()
+            print(f"📍 갤러리에서 bounds 추출됨: {bounds}")
+            return bounds
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"⚠️ 갤러리에서 bounds 추출 실패: {e}")
+        return None
 
 def main():
     ap = argparse.ArgumentParser("cat-embedding (Re-ID)")
@@ -31,7 +80,14 @@ def main():
     args = ap.parse_args()
 
     if args.cmd == "build":
-        bounds = json.loads(args.bounds) if args.bounds else None
+        # bounds 설정: 사용자 지정 또는 자동 계산
+        if args.bounds:
+            bounds = json.loads(args.bounds)
+            print(f"📍 사용자 지정 bounds: {bounds}")
+        else:
+            bounds = calculate_auto_bounds(args.meta)
+            if bounds is None:
+                print("⚠️ 위치 정보가 없어 bounds 없이 갤러리를 구축합니다.")
         
         # 메타데이터 파일 확인
         if not os.path.exists(args.meta):
@@ -59,7 +115,15 @@ def main():
         print(f"✅ gallery saved to {args.out}")
 
     elif args.cmd == "match":
-        bounds = json.loads(args.bounds) if args.bounds else None
+        # bounds 설정: 사용자 지정 또는 갤러리에서 자동 추출
+        if args.bounds:
+            bounds = json.loads(args.bounds)
+            print(f"📍 사용자 지정 bounds: {bounds}")
+        else:
+            # 갤러리 파일에서 bounds 정보 추출 시도
+            bounds = extract_bounds_from_gallery(args.gallery)
+            if bounds is None:
+                print("⚠️ 갤러리에서 bounds 정보를 찾을 수 없습니다. 위치 정보 없이 매칭합니다.")
         
         # 갤러리 파일 확인
         if not os.path.exists(args.gallery):
